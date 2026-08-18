@@ -61,6 +61,10 @@ class WebExtension {
     console.log('Type:', response.type)
     console.log('Result:', response.result)
     console.log('Full:', JSON.stringify(response, null, 2))
+
+    if (response.type === 'error') {
+      throw new Error(`${response.error}: ${response.message}`)
+    }
     
     return response.result.extension
   }

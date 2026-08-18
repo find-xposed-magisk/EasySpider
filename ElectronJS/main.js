@@ -1425,8 +1425,6 @@ async function runBrowser(lang = "en", user_data_folder = "", mobile = false) {
     // } else if (lang == "zh") {
     //     options.addExtensions(path.join(__dirname, "EasySpider_zh.crx"));
     // }
-    // options.addExtensions(path.join(__dirname, "XPathHelper.crx"));
-
     // 使用 BiDi WebExtension API
     const getWebExtensionInstance = require('./selenium-webdriver-bidi-webExtension/webExtension');
     const ExtensionData = require('./selenium-webdriver-bidi-webExtension/extensionData');
@@ -1473,12 +1471,21 @@ async function runBrowser(lang = "en", user_data_folder = "", mobile = false) {
         let easySpiderPath;
         if (lang == "zh") {
             easySpiderPath = path.join(__dirname, "EasySpider_zh");
-            await webExtension.install(ExtensionData.setPath(easySpiderPath));
         } else {
             easySpiderPath = path.join(__dirname, "EasySpider_en");
-            await webExtension.install(ExtensionData.setPath(easySpiderPath));
         }
+        const easySpiderId = await webExtension.install(
+            ExtensionData.setPath(easySpiderPath)
+        );
+        console.log(`EasySpider 扩展已安装，ID: ${easySpiderId}`);
 
+        // Chrome 151 不再接受旧的 Manifest V2 XPathHelper.crx；
+        // 使用 BiDi 安装解压后的 Manifest V3 兼容版本。
+        const xpathHelperPath = path.join(__dirname, "XPathHelper_MV3");
+        const xpathHelperId = await webExtension.install(
+            ExtensionData.setPath(xpathHelperPath)
+        );
+        console.log(`XPath Helper MV3 已安装，ID: ${xpathHelperId}`);
     } catch (error) {
         console.error('安装扩展失败:', error);
         throw error;

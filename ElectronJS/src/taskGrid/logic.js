@@ -491,7 +491,7 @@ if (mobile == "true") {
 }
 
 let serviceInfo = {
-    "version": "0.6.3"
+    "version": "0.6.5"
 };
 
 function saveService(type) {
@@ -625,7 +625,7 @@ function saveService(type) {
         "links": links,
         "create_time": $("#create_time").val(),
         "update_time": formatDateTime(new Date()),
-        "version": "0.6.3",
+        "version": "0.6.5",
         "saveThreshold": saveThreshold,
         // "cloudflare": cloudflare,
         "quitWaitTime": parseInt($("#quitWaitTime").val()),

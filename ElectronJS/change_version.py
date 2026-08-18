@@ -1,90 +1,74 @@
+"""Update the version in all source and packaging metadata files.
+
+Run this script from any directory, for example::
+
+    python ElectronJS/change_version.py 0.6.5
+"""
+
+import argparse
 import json
-import os
 import re
-import sys
-
-# 读取JSON文件
+from pathlib import Path
 
 
-def read_json_file(file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
-    return data
-
-# 保存为JSON文件
+VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+ROOT = Path(__file__).resolve().parent
 
 
-def save_json_file(data, file_path):
-    with open(file_path, 'w', encoding='utf-8') as file:
-        json.dump(data, file, indent=4, ensure_ascii=False)
+def _read_text(path):
+    with path.open("r", encoding="utf-8", newline="") as file:
+        return file.read()
 
 
-def update_file_version(file_path, new_version, key="当前版本/Current Version: v"):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        lines = file.readlines()
-    with open(file_path, 'w', encoding='utf-8') as file:
-        for line in lines:
-            if key in line:
-                pattern = r'('+key+')\d+\.\d+\.\d+'
-                line = re.sub(pattern, r'\g<1>'+new_version, line)
-            file.write(line)
+def _write_text(path, text):
+    with path.open("w", encoding="utf-8", newline="") as file:
+        file.write(text)
 
 
-version = "0.6.3"
+def update_text_file(path, prefix, version):
+    text = _read_text(path)
+    pattern = re.escape(prefix) + r"\d+\.\d+\.\d+"
+    updated, count = re.subn(pattern, prefix + version, text)
+    if count == 0:
+        raise ValueError(f"Version marker not found in {path}: {prefix}")
+    _write_text(path, updated)
 
-# py html js
+
+def update_json_file(path, version, update_forge_app_version=False):
+    original = _read_text(path)
+    data = json.loads(original)
+    data["version"] = version
+    if isinstance(data.get("packages"), dict) and "" in data["packages"]:
+        data["packages"][""]["version"] = version
+    if update_forge_app_version:
+        data["config"]["forge"]["packagerConfig"]["appVersion"] = version
+    newline = "\r\n" if "\r\n" in original else "\n"
+    _write_text(path, json.dumps(data, indent=4, ensure_ascii=False) + newline)
+
+
+def update_version(version):
+    update_text_file(ROOT.parent / ".temp_to_pub" / "compress.py", 'easyspider_version = "', version)
+    update_text_file(ROOT / "src" / "taskGrid" / "logic.js", '"version": "', version)
+    update_text_file(ROOT.parent / "ExecuteStage" / "easyspider_executestage.py", '"version": "', version)
+    update_text_file(ROOT / "src" / "index.html", "软件当前版本：<b>v", version)
+    update_text_file(ROOT / "src" / "index.html", "Current Version: <b>v", version)
+
+    update_json_file(ROOT / "package.json", version, update_forge_app_version=True)
+    update_json_file(ROOT / "package-lock.json", version)
+    update_json_file(ROOT.parent / "Extension" / "manifest_v3" / "package.json", version)
+    update_json_file(ROOT.parent / "Extension" / "manifest_v3" / "package-lock.json", version)
+    update_json_file(ROOT.parent / "Extension" / "manifest_v3" / "src" / "manifest.json", version)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("version", help="new semantic version, for example 0.6.5")
+    args = parser.parse_args()
+    if not VERSION_RE.fullmatch(args.version):
+        parser.error("version must have the form MAJOR.MINOR.PATCH")
+    update_version(args.version)
+    print(f"Updated EasySpider version to {args.version}")
+
 
 if __name__ == "__main__":
-
-    file_path = "../.temp_to_pub/compress.py"
-    update_file_version(file_path, version, key='easyspider_version = "')
-
-    file_path = "./src/taskGrid/logic.js"
-    update_file_version(file_path, version, key='"version": "')
-
-    file_path = "../ExecuteStage/easyspider_executestage.py"
-    update_file_version(file_path, version, key='"version": "')
-
-    # index.html
-    file_path = "./src/index.html"
-    update_file_version(file_path, version, key="软件当前版本：<b>v")
-    update_file_version(file_path, version, key="Current Version: <b>v")
-
-    # package.json
-    file_path = "./package.json"
-
-    # 读取JSON文件
-    electron_config = read_json_file(file_path)
-    print(electron_config["version"])
-
-    # 修改数据
-    electron_config["version"] = version
-    electron_config["config"]["forge"]["packagerConfig"]["appVersion"] = version
-
-    # 保存为JSON文件
-    save_json_file(electron_config, file_path)
-
-    # 插件的package.json
-    file_path = "../Extension/manifest_v3/package.json"
-
-    # 读取JSON文件
-    electron_config = read_json_file(file_path)
-    print(electron_config["version"])
-
-    # 修改数据
-    electron_config["version"] = version
-
-    # 保存为JSON文件
-    save_json_file(electron_config, file_path)
-
-    file_path = "../Extension/manifest_v3/src/manifest.json"
-
-    # 读取JSON文件
-    electron_config = read_json_file(file_path)
-    print(electron_config["version"])
-
-    # 修改数据
-    electron_config["version"] = version
-
-    # 保存为JSON文件
-    save_json_file(electron_config, file_path)
+    main()

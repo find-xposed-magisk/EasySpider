@@ -18269,7 +18269,7 @@ staticRenderFns: [function(){var _vm=this;var _h=_vm.$createElement;var _c=_vm._
   },
 };
 
-var css_248z = "\n#wrapperToolkitIframe{\n  position: absolute;\n  top:0;\n}\n.toolcannotdrag{\n  background-color: navy;\n  width: 100%;\n  text-align: center;\n  font-size: 13px;\n  height: 26px !important;\n  padding-top: 8px !important;\n  color: white;\n}\n";
+var css_248z = "\r\n#wrapperToolkitIframe{\r\n  position: absolute;\r\n  top:0;\r\n}\r\n.toolcannotdrag{\r\n  background-color: navy;\r\n  width: 100%;\r\n  text-align: center;\r\n  font-size: 13px;\r\n  height: 26px !important;\r\n  padding-top: 8px !important;\r\n  color: white;\r\n}\r\n";
 styleInject(css_248z);
 
 ({

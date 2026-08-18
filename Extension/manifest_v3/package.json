@@ -1,6 +1,6 @@
 {
     "name": "EasySpider",
-    "version": "0.6.3",
+    "version": "0.6.5",
     "type": "module",
     "scripts": {
         "build": "rollup -c",
