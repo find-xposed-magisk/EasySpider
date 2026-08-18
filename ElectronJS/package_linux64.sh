@@ -11,18 +11,32 @@ if [[ "$(uname -s)" != "Linux" || "$(uname -m)" != "x86_64" ]]; then
 fi
 
 CHROME_DIR="$SCRIPT_DIR/chrome_linux64"
-for required_file in chrome chromedriver_linux64; do
+for required_file in chrome chromedriver_linux64 chrome_crashpad_handler; do
     if [[ ! -f "$CHROME_DIR/$required_file" ]]; then
         echo "Missing Linux x64 browser file: $CHROME_DIR/$required_file" >&2
         exit 1
     fi
 done
 
+if [[ -f "$CHROME_DIR/chrome_sandbox" ]]; then
+    CHROME_SANDBOX="$CHROME_DIR/chrome_sandbox"
+elif [[ -f "$CHROME_DIR/chrome-sandbox" ]]; then
+    CHROME_SANDBOX="$CHROME_DIR/chrome-sandbox"
+else
+    echo "Missing Chrome sandbox helper below $CHROME_DIR" >&2
+    exit 1
+fi
+
 # main.js starts this launcher from chrome_linux64. Keep the launcher beside
 # the execution-stage binary so it can resolve that binary relative to itself.
 cp "$SCRIPT_DIR/execute_linux64.sh" "$CHROME_DIR/execute_linux64.sh"
-chmod 755 "$CHROME_DIR/chrome" "$CHROME_DIR/chromedriver_linux64" \
-    "$CHROME_DIR/execute_linux64.sh"
+for executable in chrome chromedriver_linux64 chrome_crashpad_handler \
+    chrome-wrapper xdg-mime xdg-settings execute_linux64.sh; do
+    if [[ -f "$CHROME_DIR/$executable" ]]; then
+        chmod 755 "$CHROME_DIR/$executable"
+    fi
+done
+chmod 755 "$CHROME_SANDBOX"
 
 rm -rf "$SCRIPT_DIR/out"
 (cd "$REPO_ROOT/Extension/manifest_v3" && node package.js)
@@ -73,9 +87,12 @@ copy_tracked_tasks() {
 copy_tracked_tasks
 
 chmod 755 "$STAGE_DIR/easy-spider.sh" "$STAGE_DIR/first_time_run.sh" 2>/dev/null || true
-chmod 755 "$STAGE_DIR/EasySpider/resources/app/chrome_linux64/chrome" \
-    "$STAGE_DIR/EasySpider/resources/app/chrome_linux64/chromedriver_linux64" \
-    "$STAGE_DIR/EasySpider/resources/app/chrome_linux64/easyspider_executestage" \
-    "$STAGE_DIR/EasySpider/resources/app/chrome_linux64/execute_linux64.sh" \
-    2>/dev/null || true
+STAGED_CHROME_DIR="$STAGE_DIR/EasySpider/resources/app/chrome_linux64"
+for executable in chrome chromedriver_linux64 chrome_crashpad_handler \
+    chrome_sandbox chrome-sandbox chrome-wrapper xdg-mime xdg-settings \
+    easyspider_executestage execute_linux64.sh; do
+    if [[ -f "$STAGED_CHROME_DIR/$executable" ]]; then
+        chmod 755 "$STAGED_CHROME_DIR/$executable"
+    fi
+done
 echo "Linux x64 application staged at $STAGE_DIR"
