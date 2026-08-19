@@ -1570,7 +1570,7 @@ class BrowserThread(Thread):
             except:
                 pass
         except Exception as e:
-            self.print_and_log("Failed to load page: " + url)
+            self.print_and_log("Failed to load page: " + url + " (" + repr(e) + ")")
         try:
             self.history["index"] = self.browser.execute_script(
                 "return history.length")
@@ -2310,7 +2310,7 @@ if __name__ == '__main__':
         "remote_control_key": "", # 如果开启远程控制，那么初始化时需要填写此 key，保证安全性
         "keyboard": True,  # 是否监听键盘输入
         "pause_key": "p",  # 暂停键
-        "version": "0.6.3",
+        "version": "0.6.5",
         "docker_driver": "",
         "user_folder": "",
     }
@@ -2326,8 +2326,6 @@ if __name__ == '__main__':
         os.mkdir(os.getcwd() + "/Data")
     if sys.platform == "darwin" and platform.architecture()[0] == "64bit":
         options.binary_location = "EasySpider.app/Contents/Resources/app/chrome_mac64.app/Contents/MacOS/Google Chrome"
-        options.add_extension(
-            "EasySpider.app/Contents/Resources/app/XPathHelper.crx")
         driver_path = "EasySpider.app/Contents/Resources/app/chromedriver_mac64"
         print(driver_path)
         if c.config_folder == "":
@@ -2341,7 +2339,6 @@ if __name__ == '__main__':
         # 相对于下一条检查语句，这里去掉了 EasySpider 文件夹这一层
         options.binary_location = "resources/app/chrome_linux64/chrome"
         driver_path = "resources/app/chrome_linux64/chromedriver_linux64"
-        options.add_extension("resources/app/XPathHelper.crx")
     elif os.path.exists(os.getcwd() + "/EasySpider/resources"):  # 打包后的路径
         print("Finding chromedriver in EasySpider",
               os.getcwd() + "/EasySpider")
@@ -2350,17 +2347,14 @@ if __name__ == '__main__':
                 os.getcwd(), "EasySpider/resources/app/chrome_win32/chrome.exe")  # 指定chrome位置
             driver_path = os.path.join(
                 os.getcwd(), "EasySpider/resources/app/chrome_win32/chromedriver_win32.exe")
-            options.add_extension("EasySpider/resources/app/XPathHelper.crx")
         elif sys.platform == "win32" and platform.architecture()[0] == "64bit":
             options.binary_location = os.path.join(
                 os.getcwd(), "EasySpider/resources/app/chrome_win64/chrome.exe")
             driver_path = os.path.join(
                 os.getcwd(), "EasySpider/resources/app/chrome_win64/chromedriver_win64.exe")
-            options.add_extension("EasySpider/resources/app/XPathHelper.crx")
         elif sys.platform == "linux" and platform.architecture()[0] == "64bit":
             options.binary_location = "EasySpider/resources/app/chrome_linux64/chrome"
             driver_path = "EasySpider/resources/app/chrome_linux64/chromedriver_linux64"
-            options.add_extension("EasySpider/resources/app/XPathHelper.crx")
         else:
             print("Unsupported platform")
             sys.exit()
@@ -2375,22 +2369,18 @@ if __name__ == '__main__':
                 os.getcwd(), "EasySpider/resources/app/chrome_win32/chrome.exe")  # 指定chrome位置
             driver_path = os.path.join(
                 os.getcwd(), "EasySpider/resources/app/chrome_win32/chromedriver_win32.exe")
-            options.add_extension("EasySpider/resources/app/XPathHelper.crx")
         elif sys.platform == "win32" and platform.architecture()[0] == "64bit":
             options.binary_location = "../ElectronJS/chrome_win64/chrome.exe"  # 指定chrome位置
             driver_path = "../ElectronJS/chrome_win64/chromedriver_win64.exe"
-            options.add_extension("../ElectronJS/XPathHelper.crx")
         elif sys.platform == "linux" and platform.architecture()[0] == "64bit":
             options.binary_location = "../ElectronJS/chrome_linux64/chrome"
             driver_path = "../ElectronJS/chrome_linux64/chromedriver_linux64"
-            options.add_extension("../ElectronJS/XPathHelper.crx")
         else:
             print("Unsupported platform for automatic detection. You need to specify chrome executable path, chromedriver path in code.")
             sys.exit()
     else:
         options.binary_location = "./chrome.exe"  # 指定chrome位置
         driver_path = "./chromedriver.exe"
-        options.add_extension("XPathHelper.crx")
 
     options.add_experimental_option(
         'excludeSwitches', ['enable-automation'])  # 以开发者模式
@@ -2418,6 +2408,14 @@ if __name__ == '__main__':
     options.add_argument("--disable-web-security")  # 禁用同源策略
     options.add_argument('-ignore-certificate-errors')
     options.add_argument('-ignore -ssl-errors')
+
+    # Many headless/server Linux hosts do not expose a usable Vulkan or VA-API
+    # driver. Force Chromium's software path so a missing GPU stack cannot
+    # leave the execution browser blank before navigation starts.
+    if sys.platform == "linux":
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-vulkan")
+        options.add_argument("--disable-dev-shm-usage")
 
     if c.headless:
         print("Headless mode")

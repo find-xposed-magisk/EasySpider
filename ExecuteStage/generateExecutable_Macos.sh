@@ -1,22 +1,73 @@
-# 先打包一个不带ddddocr和pandas的版本，然后再打包一个带的版本，不带ddddocr和pandas的版本运行速度会快很多
-rm -r build
-rm -r dist
-pyinstaller -F --icon=favicon.ico easyspider_executestage.py --exclude-module ddddocr --exclude-module onnxruntime --exclude-module onnx --exclude-module onnxruntime_pybind11_state.so --exclude-module pillow --exclude-module pandas --exclude-module numpy --exclude-module scipy --exclude-module sklearn 
+#!/usr/bin/env bash
+set -euo pipefail
 
-rm ../.temp_to_pub/EasySpider_MacOS/easyspider_executestage
-cp dist/easyspider_executestage ../.temp_to_pub/EasySpider_MacOS/easyspider_executestage
-# mv dist/easyspider_executestage ../ElectronJS/easyspider_executestage
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
 
-echo "With ddddocr and pandas"
+if [[ "$(uname -s)" != "Darwin" ]]; then
+    echo "This script must run on macOS." >&2
+    exit 1
+fi
 
-# # 打包带ddddocr和pandas的版本
-rm -r build
-rm -r dist
-# Get the site-packages path for ddddocr and onnxruntime
-# 如果当前终端激活了 conda 环境，下方脚本应当可以正确的从 conda 环境安装的包中获得数据文件位置
-ddddocr_path=$(python3 -c "import ddddocr; print(ddddocr.__path__[0])")
-onnxruntime_path=$(python3 -c "import onnxruntime; print(onnxruntime.__path__[0])")
+HOST_ARCH="$(uname -m)"
+PYTHON_VERSION="$($PYTHON_BIN -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+PYTHON_ARCH="$($PYTHON_BIN -c 'import platform; print(platform.machine())')"
+if [[ "$HOST_ARCH" != "arm64" && "$HOST_ARCH" != "x86_64" ]]; then
+    echo "Unsupported macOS architecture: $HOST_ARCH" >&2
+    exit 1
+fi
+if [[ "$PYTHON_VERSION" != "3.11" || "$PYTHON_ARCH" != "$HOST_ARCH" ]]; then
+    echo "Native Python 3.11 $HOST_ARCH is required; found Python $PYTHON_VERSION $PYTHON_ARCH." >&2
+    exit 1
+fi
 
-pyinstaller -F --icon=favicon.ico --add-data "$onnxruntime_path/capi/onnxruntime_pybind11_state.so:onnxruntime/capi" --add-data "$ddddocr_path/common_old.onnx:ddddocr" easyspider_executestage.py
-rm ../.temp_to_pub/EasySpider_MacOS/easyspider_executestage_full
-cp dist/easyspider_executestage ../.temp_to_pub/EasySpider_MacOS/easyspider_executestage_full
+STAGE_DIR="$REPO_ROOT/.temp_to_pub/EasySpider_MacOS"
+mkdir -p "$STAGE_DIR"
+cd "$SCRIPT_DIR"
+
+# The lightweight executor omits OCR and Pandas but retains Pillow, which is
+# imported by the execution-stage program independently of OCR.
+rm -rf build dist
+"$PYTHON_BIN" -m PyInstaller \
+    --noconfirm \
+    --clean \
+    --onefile \
+    --target-arch "$HOST_ARCH" \
+    --icon favicon.ico \
+    --hidden-import selenium.webdriver.ie.webdriver \
+    --exclude-module ddddocr \
+    --exclude-module onnxruntime \
+    --exclude-module onnx \
+    --exclude-module pandas \
+    --exclude-module numpy \
+    --exclude-module scipy \
+    --exclude-module sklearn \
+    easyspider_executestage.py
+install -m 755 dist/easyspider_executestage "$STAGE_DIR/easyspider_executestage"
+
+DDDDOCR_MODEL="$($PYTHON_BIN -c 'import ddddocr, pathlib; print(pathlib.Path(ddddocr.__file__).resolve().parent / "common_old.onnx")')"
+ONNX_STATE="$($PYTHON_BIN -c 'import onnxruntime, pathlib; capi = pathlib.Path(onnxruntime.__file__).resolve().parent / "capi"; matches = sorted(capi.glob("onnxruntime_pybind11_state*.so")); print(matches[0] if matches else "")')"
+
+if [[ ! -f "$DDDDOCR_MODEL" ]]; then
+    echo "Could not find ddddocr/common_old.onnx in the active Python environment." >&2
+    exit 1
+fi
+if [[ ! -f "$ONNX_STATE" ]]; then
+    echo "Could not find onnxruntime_pybind11_state*.so in the active Python environment." >&2
+    exit 1
+fi
+
+rm -rf build dist
+"$PYTHON_BIN" -m PyInstaller \
+    --noconfirm \
+    --clean \
+    --onefile \
+    --target-arch "$HOST_ARCH" \
+    --icon favicon.ico \
+    --hidden-import selenium.webdriver.ie.webdriver \
+    --add-binary "$ONNX_STATE:onnxruntime/capi" \
+    --add-data "$DDDDOCR_MODEL:ddddocr" \
+    easyspider_executestage.py
+install -m 755 dist/easyspider_executestage "$STAGE_DIR/easyspider_executestage_full"
+echo "macOS $HOST_ARCH execution stages packaged successfully."

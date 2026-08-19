@@ -1,5 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "Executing EasySpider on MacOS"
-
-./easyspider_executestage $1 $2 $3 $4 $5 $6 $7 $8 $9
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/easyspider_executestage" "$@"

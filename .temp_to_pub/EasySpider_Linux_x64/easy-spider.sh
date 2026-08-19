@@ -1,50 +1,43 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# 使用 lsb_release 获取系统信息
-os_name=$(lsb_release -si)
-os_version=$(lsb_release -sr)
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="$SCRIPT_DIR/EasySpider"
+CHROME_DIR="$APP_DIR/resources/app/chrome_linux64"
 
-# 提取主版本号副版本号
-major_version=$(echo $os_version | cut -d'.' -f1)
-minor_version=$(echo $os_version | cut -d'.' -f2)
+for executable in chrome chromedriver_linux64 chrome_crashpad_handler \
+    chrome-wrapper xdg-mime xdg-settings easyspider_executestage \
+    execute_linux64.sh; do
+    if [[ -f "$CHROME_DIR/$executable" ]]; then
+        chmod 755 "$CHROME_DIR/$executable"
+    fi
+done
 
-# 检查是否为Ubuntu且版本大于等于24.04
-if [ "$os_name" == "Ubuntu" ] && [ "$major_version" -gt 24 ] || { [ "$major_version" -eq 24 ]; }; then
-   # 要检查的文件路径
-	file_path="./EasySpider/chrome-sandbox"
+configure_sandbox() {
+    local sandbox_path="$1"
+    local owner
+    local permissions
 
-	# 检查文件是否存在
-	if [ ! -e "$file_path" ]; then
-		echo "File Not Exist!"
-		exit 1
-	fi
+    [[ -f "$sandbox_path" ]] || return 0
+    owner="$(stat -c %U "$sandbox_path")"
+    permissions="$(stat -c %a "$sandbox_path")"
+    if [[ "$owner" != "root" || "$permissions" != "4755" ]]; then
+        echo "EasySpider needs to configure its Chromium sandbox once."
+        echo "EasySpider 首次运行需要配置 Chromium 沙箱权限。"
+        sudo chown root:root "$sandbox_path"
+        sudo chmod 4755 "$sandbox_path"
+    fi
+}
 
-	# 获取文件的拥有者
-	owner=$(stat -c %U "$file_path")
+configure_sandbox "$APP_DIR/chrome-sandbox"
 
-	# 获取文件的权限
-	permissions=$(stat -c %a "$file_path")
-
-	# 检查拥有者是否为root且权限是否为4755
-	if [ "$owner" != "root" ] || [ "$permissions" != "4755" ]; then
-		echo "这是你第一次在该Ubuntu系统上使用EasySpider，请在下方输入密码来调整文件权限以使用EasySpider："
-		echo "This is the first time you use EasySpider in this Ubuntu system, please change your permission of the software by input your password below (should have root/sudo permission):"
-		sudo chown root:root "$file_path"
-		sudo chmod 4755 "$file_path"
-		sudo chown root:root "./EasySpider/resources/app/chrome_linux64/chrome-sandbox"
-		sudo chmod 4755 "./EasySpider/resources/app/chrome_linux64/chrome-sandbox"
-	fi
+if [[ -f "$CHROME_DIR/chrome_sandbox" ]]; then
+    configure_sandbox "$CHROME_DIR/chrome_sandbox"
+elif [[ -f "$CHROME_DIR/chrome-sandbox" ]]; then
+    configure_sandbox "$CHROME_DIR/chrome-sandbox"
 else
-	echo "如果报错“The SUID sandbox helper binary was found, but is not configured correctly”，请尝试执行以下命令后再次运行EasySpider："
-	echo "If you encounter the error message “The SUID sandbox helper binary was found, but is not configured correctly”, please try run the following commands and run EasySpider again:"
-	echo ""
-	echo "sudo chown root:root ./EasySpider/chrome-sandbox"
-	echo "sudo chmod 4755 ./EasySpider/chrome-sandbox"
-	echo "sudo chown root:root ./EasySpider/resources/app/chrome_linux64/chrome-sandbox"
-	echo "sudo chmod 4755 ./EasySpider/resources/app/chrome_linux64/chrome-sandbox"
-	echo ""
-	echo ""
+    echo "Chrome sandbox helper is missing below $CHROME_DIR" >&2
+    exit 1
 fi
 
-
-./EasySpider/EasySpider
+exec "$APP_DIR/EasySpider"

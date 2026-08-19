@@ -1,0 +1,2 @@
+# Bash scripts must retain Unix line endings on every build host.
+*.sh text eol=lf
