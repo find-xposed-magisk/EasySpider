@@ -1570,7 +1570,7 @@ class BrowserThread(Thread):
             except:
                 pass
         except Exception as e:
-            self.print_and_log("Failed to load page: " + url)
+            self.print_and_log("Failed to load page: " + url + " (" + repr(e) + ")")
         try:
             self.history["index"] = self.browser.execute_script(
                 "return history.length")
@@ -2408,6 +2408,14 @@ if __name__ == '__main__':
     options.add_argument("--disable-web-security")  # 禁用同源策略
     options.add_argument('-ignore-certificate-errors')
     options.add_argument('-ignore -ssl-errors')
+
+    # Many headless/server Linux hosts do not expose a usable Vulkan or VA-API
+    # driver. Force Chromium's software path so a missing GPU stack cannot
+    # leave the execution browser blank before navigation starts.
+    if sys.platform == "linux":
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-vulkan")
+        options.add_argument("--disable-dev-shm-usage")
 
     if c.headless:
         print("Headless mode")
