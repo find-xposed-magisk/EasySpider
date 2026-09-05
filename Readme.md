@@ -55,23 +55,10 @@ Get your extra 6% extra credit using EasySpider’s bonus code: **ESN**.
 
 Click [here](https://www.capsolver.com/blog/web-scraping/easyspider-capsolver) to see how to solve captcha in EasySpider with CapSolver integration.
 
-<a target="_blank" href="https://www.ippeak.com/?utm_t=1&utm_i=127"><img src="media/IPPeak.png" width=850></img></a>
+<a target="_blank" href="https://www.webshare.io/"><img src="media/Webshare.png" width=850></img></a>
 
-[IPPeak](https://www.ippeak.com/?utm_t=1&utm_i=127)提供海量真实住宅 IP + 高性能网络架构，有效降低封禁率，提升成功率，让每一次请求都更有价值。
-平均响应 < 0.5 秒 ｜IP 来源合规可靠 ｜任务流畅不中断
+[Webshare](https://www.webshare.io/) 是一家经济实惠且高性能的代理服务提供商，提供覆盖全球 195 个国家/地区的超过 8000 万个住宅、数据中心及 ISP 代理。其服务专为大规模网络爬虫和数据采集而设计，支持精确到国家和城市的定位，并提供轮换式住宅代理带宽，起价仅为 1.40 美元/GB。您可以利用包含 10 个代理和每月 1GB 流量的永久免费套餐（无需信用卡）无风险试用该网络，首次购买时使用优惠码 **SPIDER20** 还可享受 8 折优惠。
 
-三大核心方案，覆盖全部采集场景
-
-住宅代理低至 $0.49/GB ｜无限并发 ｜支持地区 / ASN精准定位
-
-不限量住宅代理
-低至 $8/小时 ｜不限流量 & IP
- 99.9% 在线率 ｜长时间运行无压力
-
-ISP 代理｜稳定长期运行
-低至 $3.7/IP ｜独享静态住宅 IP ｜不限流量
-
-7×24 小时专业支持，IPPeak保障数据采集稳定持续运行
 
 <a target="_blank" href="https://legionproxy.io/?utm_source=github&utm_campaign=easyspider"><img src="media/LegionProxy.png" width=850></img></a>
 [LegionProxy](https://legionproxy.io/?utm_source=github&utm_campaign=easyspider)作为快速发展的代理网络，覆盖全球195+国家和地区，拥有7400万+真实住宅 IP，提供真实 residential proxies及HTTP/3支持，助力大规模web scraping和自动化任务，有效规避IP封锁。住宅套餐低至$0.60/GB起，支持即时开通，中文客服快速响应。
