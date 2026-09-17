@@ -738,7 +738,8 @@ class myMySQL:
                 if record[i]:
                     to_write.append(line[i])
             # 构造插入数据的 SQL 语句, IGNORE表示如果主键重复则忽略
-            sql = f'INSERT IGNORE INTO {self.table_name} {self.field_sql} VALUES ('
+            safe_table_name = '`' + self.table_name.replace('`', '``') + '`'
+            sql = f'INSERT IGNORE INTO {safe_table_name} {self.field_sql} VALUES ('
             for _ in to_write:
                 sql += "%s, "
             # 移除最后的逗号并添加闭合的括号
