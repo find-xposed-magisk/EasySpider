@@ -134,11 +134,11 @@ document.addEventListener("mousemove", function() {
             }
         }
 
-        try {
-            global.xnode = global.oe.style.backgroundColor;
-        } catch {
-            global.xnode = "";
-        }
+        // try {
+        //     global.xnode = global.oe.style.backgroundColor;
+        // } catch {
+        //     global.xnode = "";
+        // }
 
         if (exist == 1) {
 
